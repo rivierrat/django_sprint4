@@ -66,6 +66,10 @@ class Post(TitleModel):
         null=True,
         on_delete=models.SET_NULL,
     )
+    image = models.ImageField(
+        'Изображение',
+        upload_to='posts_images',
+        blank=True)
 
     class Meta:
         verbose_name = 'публикация'
@@ -100,3 +104,23 @@ class Location(PublishedCreatedModel):
 
     def __str__(self):
         return self.name[:settings.LOCATION_PREVIEW_LENGTH]
+
+
+class Comment(models.Model):
+    text = models.TextField('Текст комментария')
+    post = models.ForeignKey(Post,
+                             on_delete=models.CASCADE,
+                             verbose_name='публикация')
+    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               verbose_name='Автор комментария')
+
+    class Meta:
+        default_related_name = 'comments'
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+        ordering = ('created_at',)
+
+    def __str__(self):
+        return f'Комментарий пользователя {self.author}'

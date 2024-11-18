@@ -6,11 +6,11 @@ TITLE_MAX_LENGTH = 256
 # Длина заголовка в превью:
 TITLE_PREVIEW_LENGTH = 20
 
-# Количество постов, выводимых на главную:
-POSTS_ON_MAIN = 5
-
 # Максимальная длина названия места:
 LOCATION_MAX_LENGTH = 256
 
 # Длина названия места в превью:
 LOCATION_PREVIEW_LENGTH = 20
+
+# Количество постов на одной странице (пагинация):
+POSTS_PER_PAGE = 10
