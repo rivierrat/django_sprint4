@@ -17,6 +17,19 @@ from .mixins import OnlyAuthorMixin, PostMixin, CommentMixin
 User = get_user_model()
 
 
+def filter_published_posts(posts):
+    return posts.select_related(
+        'author', 'category', 'location',
+    ).filter(is_published=True,
+             pub_date__lte=now(),
+             category__is_published=True,)
+
+
+def annotate_comment_count(posts):
+    return posts.objects.all().annotate(
+        comment_count=Count('comments')).order_by('-pub_date')
+
+
 # Отображение контента:
 class IndexView(ListView):
     """Вывод последних опубликованных постов. Видно всем."""
@@ -25,11 +38,8 @@ class IndexView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'posts'
     paginate_by = settings.POSTS_PER_PAGE
-    queryset = Post.objects.filter(
-        is_published=True,
-        category__is_published=True,
-        pub_date__lte=now(),
-    ).annotate(comment_count=Count('comments')).order_by('-pub_date')
+    queryset = filter_published_posts(Post.objects.all()).annotate(
+        comment_count=Count('comments')).order_by('-pub_date')
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -55,12 +65,9 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         if post.author == self.request.user:
             return post
         else:
-            return get_object_or_404(
-                Post.objects.filter(is_published=True,
-                                    pub_date__lte=now(),
-                                    category__is_published=True,),
-                pk=self.kwargs.get('post_id')
-            )
+            return get_object_or_404(filter_published_posts(Post.objects.all()),
+                                     pk=self.kwargs.get('post_id')
+                                     )
 
 
 class CategoryView(ListView):
