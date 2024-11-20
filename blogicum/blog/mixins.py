@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404, redirect
 from .models import Category, Comment, Post
 from .forms import CommentForm, PostForm
 from django.urls import reverse, reverse_lazy
+from django.utils.timezone import now
+from django.db.models import Count
 
 
 class OnlyAuthorMixin(UserPassesTestMixin):
@@ -18,11 +20,11 @@ class PostMixin(OnlyAuthorMixin, LoginRequiredMixin):
     pk_url_kwarg = 'post_id'
     form_class = PostForm
 
-    def handle_no_permission(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=kwargs.get('post_id'),)
-        if instance.author != request.user:
-            return redirect('blog:post_detail', self.kwargs.get('post_id'))
-        return super().dispatch(request, *args, **kwargs)
+    def handle_no_permission(self):
+        # instance = get_object_or_404(Post, pk=kwargs.get('post_id'),)
+        # if instance.author != request.user:
+        return redirect('blog:post_detail', self.kwargs.get('post_id'))
+        # return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -32,5 +34,21 @@ class PostMixin(OnlyAuthorMixin, LoginRequiredMixin):
 
     def get_success_url(self):
         return reverse_lazy(
-            'blog:post_detail', kwargs={'post_id': self.object.pk}
+            'blog:profile', kwargs={'username': self.request.user.username}
         )
+
+
+class CommentMixin (LoginRequiredMixin):
+    model = Comment
+    template_name = 'blog/comment.html'
+    pk_url_kwarg = 'comment_id'
+
+    def dispatch(self, request, *args, **kwargs):
+        instance = get_object_or_404(Comment, id=kwargs['comment_id'])
+        if instance.author != request.user:
+            return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('blog:post_detail',
+                       kwargs={'post_id': self.object.post.id})
