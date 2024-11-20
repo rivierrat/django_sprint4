@@ -7,7 +7,20 @@ from . import settings
 User = get_user_model()
 
 
-class PublishedCreatedModel(models.Model):
+class CreatedAtModel(models.Model):
+    """Добавляет время создания контента."""
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ('created_at',)
+
+
+class PublishedCreatedModel(CreatedAtModel):
     """Признаки публикации материала.
 
     Добавляет флаг публикации и время создания контента (поста, категории,
@@ -19,12 +32,8 @@ class PublishedCreatedModel(models.Model):
         default=True,
         help_text='Снимите галочку, чтобы скрыть публикацию.',
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Добавлено',
-    )
 
-    class Meta:
+    class Meta(CreatedAtModel.Meta):
         abstract = True
 
 
@@ -34,7 +43,7 @@ class TitleModel(PublishedCreatedModel):
         verbose_name='Заголовок',
     )
 
-    class Meta:
+    class Meta(PublishedCreatedModel.Meta):
         abstract = True
 
     def __str__(self):
@@ -69,7 +78,8 @@ class Post(TitleModel):
     image = models.ImageField(
         'Изображение',
         upload_to='posts_images',
-        blank=True)
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'публикация'
@@ -87,7 +97,7 @@ class Category(TitleModel):
         'латиницы, цифры, дефис и подчёркивание.',
     )
 
-    class Meta:
+    class Meta(TitleModel.Meta):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
@@ -98,7 +108,7 @@ class Location(PublishedCreatedModel):
         verbose_name='Название места'
     )
 
-    class Meta:
+    class Meta(PublishedCreatedModel.Meta):
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
 
@@ -106,21 +116,19 @@ class Location(PublishedCreatedModel):
         return self.name[:settings.LOCATION_PREVIEW_LENGTH]
 
 
-class Comment(models.Model):
+class Comment(CreatedAtModel):
     text = models.TextField('Текст комментария')
     post = models.ForeignKey(Post,
                              on_delete=models.CASCADE,
                              verbose_name='публикация')
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
                                verbose_name='Автор комментария')
 
-    class Meta:
+    class Meta(CreatedAtModel.Meta):
         default_related_name = 'comments'
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        ordering = ('created_at',)
 
     def __str__(self):
         return f'Комментарий пользователя {self.author}'

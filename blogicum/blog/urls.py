@@ -7,7 +7,9 @@ app_name = 'blog'
 
 urlpatterns = [
     # Главная страница:
-    path('', views.IndexView.as_view(), name='index'),
+    path('',
+         views.IndexView.as_view(),
+         name='index'),
     # Посты:
     path('posts/<int:post_id>/',
          views.PostDetailView.as_view(),

@@ -22,8 +22,7 @@ class OnlyAuthorMixin(UserPassesTestMixin):
     """Даёт доступ к контенту только его автору."""
 
     def test_func(self):
-        object = self.get_object()
-        return object.author == self.request.user
+        return self.get_object().author == self.request.user
 
 
 # Отображение контента:
@@ -34,13 +33,11 @@ class IndexView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'posts'
     paginate_by = settings.POSTS_PER_PAGE
-
-    def get_queryset(self):
-        return Post.objects.filter(is_published=True,
-                                   category__is_published=True,
-                                   pub_date__lte=now(),
-                                   ).annotate(comment_count=Count('comments')
-                                              ).order_by('-pub_date')
+    queryset = Post.objects.filter(
+        is_published=True,
+        category__is_published=True,
+        pub_date__lte=now(),
+    ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -85,8 +82,8 @@ class CategoryView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['category'] = get_object_or_404(Category.objects.filter(
-            is_published=True),
+        context['category'] = get_object_or_404(
+            Category.objects.filter(is_published=True),
             slug=self.kwargs['category_slug']
         )
         return context
@@ -96,10 +93,10 @@ class CategoryView(ListView):
             'category',
             'location',
             'author',
-        ).filter(is_published=True, pub_date__lte=now(),
-                 category__slug=self.kwargs['category_slug']
-                 ).annotate(comment_count=Count('comments')
-                            ).order_by('-pub_date')
+        ).filter(
+            is_published=True, pub_date__lte=now(),
+            category__slug=self.kwargs['category_slug']
+        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
 # Работа с постами:
@@ -184,8 +181,7 @@ class ProfileView(ListView):
             author__username=self.kwargs['username']
         ).select_related(
             'location', 'category', 'author'
-        ).annotate(comment_count=Count('comments')
-                   ).order_by('-pub_date')
+        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
@@ -247,6 +243,3 @@ class CommentUpdateView(LoginRequiredMixin, CommentMixin, UpdateView):
 
 class CommentDeleteView(LoginRequiredMixin, CommentMixin, DeleteView):
     pass
-
-
-# Категории:
