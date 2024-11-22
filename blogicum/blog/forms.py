@@ -6,7 +6,6 @@ from .models import Comment, Post
 # from django.utils.timezone import now, datetime
 
 
-
 User = get_user_model()
 
 
