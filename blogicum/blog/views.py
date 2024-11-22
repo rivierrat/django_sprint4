@@ -155,26 +155,26 @@ class ProfileView(ListView):
     ordering = 'id'
     paginate_by = settings.POSTS_PER_PAGE
 
+    @staticmethod
+    def get_profile(self):
+        return get_object_or_404(User, username=self.kwargs['username'])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = get_object_or_404(
-            User,
-            username=self.kwargs['username']
-        )
+        context['profile'] = self.get_profile(self)
         return context
 
     def get_queryset(self):
-        return Post.objects.filter(
-            author__username=self.kwargs['username']
-        ).select_related(
-            'location', 'category', 'author'
-        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
+        posts = self.get_profile(self).posts
+        if self.request.user.username != self.kwargs['username']:
+            posts = filter_published_posts(posts)
+        return annotate_comment_count(posts).order_by('-pub_date')
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = 'blog/user.html'
-    fields = ['username', 'first_name', 'last_name', 'email']
+    fields = ('username', 'first_name', 'last_name', 'email')
 
     def get_object(self, queryset=None):
         return self.request.user
