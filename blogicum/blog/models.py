@@ -57,6 +57,7 @@ class Post(TitleModel):
         User,
         verbose_name='Автор публикации',
         on_delete=models.CASCADE,
+
     )
     location = models.ForeignKey(
         'Location',

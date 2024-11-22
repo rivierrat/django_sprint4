@@ -83,24 +83,26 @@ class CategoryView(ListView):
     ordering = 'id'
     paginate_by = settings.POSTS_PER_PAGE
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['category'] = get_object_or_404(
-            Category.objects.filter(is_published=True),
+    @staticmethod
+    def get_category(self):
+        return get_object_or_404(Category.objects.filter(
+            is_published=True),
             slug=self.kwargs['category_slug']
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.get_category(self)
         return context
 
     def get_queryset(self):
-        return annotate_comment_count(Post.objects.select_related(
-            'category',
-            'location',
-            'author',
-        ).filter(
-            is_published=True, pub_date__lte=now(),
-            category__slug=self.kwargs['category_slug']
-        ).order_by('-pub_date')
-        )
+        category = self.get_category(self)
+        return filter_published_posts(
+            annotate_comment_count(category.posts).select_related(
+                'category',
+                'location',
+                'author',
+            )).filter(category__slug=self.kwargs['category_slug'])
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
