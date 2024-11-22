@@ -21,11 +21,7 @@ class CreatedAtModel(models.Model):
 
 
 class PublishedCreatedModel(CreatedAtModel):
-    """Признаки публикации материала.
-
-    Добавляет флаг публикации и время создания контента (поста, категории,
-    локации).
-    """
+    """Добавляет флаг публикации и время создания контента."""
 
     is_published = models.BooleanField(
         verbose_name='Опубликовано',

@@ -17,17 +17,20 @@ from .mixins import OnlyAuthorMixin, PostMixin, CommentMixin
 User = get_user_model()
 
 
-def filter_published_posts(posts):
-    return posts.select_related(
+def filter_published_posts(requested_posts):
+    """Отбор опубликованных постов и сортировка от новых к старым."""
+    return requested_posts.select_related(
         'author', 'category', 'location',
     ).filter(is_published=True,
              pub_date__lte=now(),
-             category__is_published=True,)
+             category__is_published=True,).order_by('-pub_date')
 
 
 def annotate_comment_count(posts):
-    return posts.objects.all().annotate(
-        comment_count=Count('comments')).order_by('-pub_date')
+    """Аннотирование постов количеством комментариев."""
+    return posts.annotate(
+        comment_count=Count('comments')
+    )
 
 
 # Отображение контента:
@@ -38,8 +41,9 @@ class IndexView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'posts'
     paginate_by = settings.POSTS_PER_PAGE
-    queryset = filter_published_posts(Post.objects.all()).annotate(
-        comment_count=Count('comments')).order_by('-pub_date')
+    queryset = filter_published_posts(
+        annotate_comment_count(Post.objects.all())
+    )
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -54,20 +58,21 @@ class PostDetailView(LoginRequiredMixin, DetailView):
     pk_url_kwarg = 'post_id'
     template_name = 'blog/detail.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = CommentForm()
-        context['comments'] = Comment.objects.filter(post=self.object)
-        return context
-
     def get_object(self, queryset=None):
         post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
         if post.author == self.request.user:
             return post
         else:
-            return get_object_or_404(filter_published_posts(Post.objects.all()),
-                                     pk=self.kwargs.get('post_id')
-                                     )
+            return get_object_or_404(
+                filter_published_posts(Post.objects.all()),
+                pk=self.kwargs.get('post_id')
+            )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = CommentForm()
+        context['comments'] = self.object.comments.select_related('author')
+        return context
 
 
 class CategoryView(ListView):
@@ -87,14 +92,15 @@ class CategoryView(ListView):
         return context
 
     def get_queryset(self):
-        return Post.objects.select_related(
+        return annotate_comment_count(Post.objects.select_related(
             'category',
             'location',
             'author',
         ).filter(
             is_published=True, pub_date__lte=now(),
             category__slug=self.kwargs['category_slug']
-        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
+        ).order_by('-pub_date')
+        )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -115,8 +121,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 
 class PostUpdateView(PostMixin, UpdateView):
-
     """Редактирование поста. Только для автора."""
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = PostForm(instance=self.get_object())
