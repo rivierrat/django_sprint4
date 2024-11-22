@@ -3,7 +3,6 @@ from django.db import models
 
 from . import settings
 
-
 User = get_user_model()
 
 

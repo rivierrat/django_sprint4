@@ -1,18 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
-from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
-from django.views.generic import (
-    CreateView, DeleteView, DetailView, ListView, UpdateView
-)
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  UpdateView)
 
 from . import settings
 from .forms import CommentForm, PostForm
-from .models import Category, Comment, Post
-from .mixins import OnlyAuthorMixin, PostMixin, CommentMixin
+from .mixins import CommentMixin, OnlyAuthorMixin, PostMixin
+from .models import Category, Post
 
 User = get_user_model()
 
@@ -186,31 +184,17 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 
 # Работа с комментариями:
-class CommentCreateView(LoginRequiredMixin, CreateView):
-    post_instance = None
-    model = Comment
-    form_class = CommentForm
-    pk_url_kwarg = 'post_id'
-    template_name = 'blog/comment.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.post_instance = get_object_or_404(Post, pk=kwargs.get('post_id'))
-        return super().dispatch(request, *args, **kwargs)
+class CommentCreateView(CommentMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
-        form.instance.post = post
+        form.instance.post = get_object_or_404(Post, pk=self.kwargs['post_id'])
         return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse_lazy('blog:post_detail',
-                            kwargs={'post_id': self.post_instance.pk})
+
+class CommentUpdateView(CommentMixin, OnlyAuthorMixin, UpdateView):
+    pass
 
 
-class CommentUpdateView(CommentMixin, UpdateView):
-    form_class = CommentForm
-
-
-class CommentDeleteView(CommentMixin, DeleteView):
+class CommentDeleteView(CommentMixin, OnlyAuthorMixin, DeleteView):
     pass

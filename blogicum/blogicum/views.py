@@ -1,6 +1,6 @@
+from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
-from django.contrib.auth.forms import UserCreationForm
 
 
 class RegistrationView(CreateView):

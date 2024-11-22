@@ -1,10 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
-from .models import Category, Comment, Post
-from .forms import CommentForm, PostForm
 from django.urls import reverse, reverse_lazy
-from django.utils.timezone import now
-from django.db.models import Count
+
+from .forms import CommentForm, PostForm
+from .models import Comment, Post
 
 
 class OnlyAuthorMixin(UserPassesTestMixin):
@@ -39,11 +38,10 @@ class CommentMixin (LoginRequiredMixin):
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = 'comment_id'
+    form_class = CommentForm
 
     def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Comment, id=kwargs['comment_id'])
-        if instance.author != request.user:
-            return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
+        self.post_instance = get_object_or_404(Post, pk=kwargs.get('post_id'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):

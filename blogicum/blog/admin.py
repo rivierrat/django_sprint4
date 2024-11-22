@@ -5,7 +5,6 @@ from django.utils.safestring import mark_safe
 from . import settings
 from .models import Category, Comment, Location, Post
 
-
 admin.site.empty_value_display = 'Не задано'
 
 admin.site.unregister(Group)
