@@ -27,7 +27,7 @@ class PostAdmin(admin.ModelAdmin):
     @admin.display(description='Текст')
     # Для поля 'text' создаём превью заданной длины:
     def trim_text(self, obj):
-        return u"%s..." % (obj.text[:settings.ADMIN_POST_PREVIEV_LENGTH],)
+        return u'%s...' % (obj.text[:settings.ADMIN_POST_PREVIEV_LENGTH],)
 
 
 @admin.register(Category)
@@ -60,4 +60,4 @@ class CommentAdmin(admin.ModelAdmin):
     @admin.display(description='Комментарий')
     # Для поля 'text' создаём превью заданной длины:
     def trim_text(self, obj):
-        return u"%s..." % (obj.text[:settings.ADMIN_COMMENT_PREVIEV_LENGTH],)
+        return u'%s...' % (obj.text[:settings.ADMIN_COMMENT_PREVIEV_LENGTH],)

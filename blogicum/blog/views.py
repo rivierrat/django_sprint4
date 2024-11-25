@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.utils.timezone import now
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
@@ -11,24 +9,11 @@ from . import settings
 from .forms import CommentForm, PostForm
 from .mixins import CommentMixin, OnlyAuthorMixin, PostMixin
 from .models import Category, Post
+from .services.postutils import annotate_comment_count as annotate
+from .services.postutils import filter_published_posts as filter_pub
+
 
 User = get_user_model()
-
-
-def filter_published_posts(requested_posts):
-    """Отбор опубликованных постов и сортировка от новых к старым."""
-    return requested_posts.select_related(
-        'author', 'category', 'location',
-    ).filter(is_published=True,
-             pub_date__lte=now(),
-             category__is_published=True,).order_by('-pub_date')
-
-
-def annotate_comment_count(posts):
-    """Аннотирование постов количеством комментариев."""
-    return posts.annotate(
-        comment_count=Count('comments')
-    )
 
 
 # Отображение контента:
@@ -39,9 +24,7 @@ class IndexView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'posts'
     paginate_by = settings.POSTS_PER_PAGE
-    queryset = filter_published_posts(
-        annotate_comment_count(Post.objects.all())
-    )
+    queryset = filter_pub(annotate(Post.objects.all()))
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -60,11 +43,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
         if post.author == self.request.user:
             return post
-        else:
-            return get_object_or_404(
-                filter_published_posts(Post.objects.all()),
-                pk=self.kwargs.get('post_id')
-            )
+        return get_object_or_404(filter_pub(Post.objects.all()))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,29 +57,26 @@ class CategoryView(ListView):
 
     model = Category
     template_name = 'blog/index.html'
-    ordering = 'id'
+    ordering = '-pub_date'
     paginate_by = settings.POSTS_PER_PAGE
 
-    @staticmethod
     def get_category(self):
-        return get_object_or_404(Category.objects.filter(
-            is_published=True),
+        return get_object_or_404(
+            Category,
+            is_published=True,
             slug=self.kwargs['category_slug']
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['category'] = self.get_category(self)
+        context['category'] = self.get_category()
         return context
 
     def get_queryset(self):
-        category = self.get_category(self)
-        return filter_published_posts(
-            annotate_comment_count(category.posts).select_related(
-                'category',
-                'location',
-                'author',
-            )).filter(category__slug=self.kwargs['category_slug'])
+        category = self.get_category()
+        return filter_pub(annotate(category.posts)).filter(
+            category__slug=self.kwargs['category_slug']
+        )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -123,25 +99,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 class PostUpdateView(PostMixin, UpdateView):
     """Редактирование поста. Только для автора."""
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = PostForm(instance=self.get_object())
-        return context
-
     def get_success_url(self):
         return reverse_lazy(
-            'blog:post_detail', kwargs={'post_id': self.object.pk}
-        )
+            'blog:post_detail', args=[self.kwargs['post_id']])
 
 
 class PostDeleteView(PostMixin, DeleteView):
     """Удаление поста. Только для автора."""
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # показываем удаляемый пост:
-        context['form'] = PostForm(instance=self.get_object())
-        return context
+    pass
 
 
 # Работа с профилем пользователя:
@@ -150,23 +116,23 @@ class ProfileView(ListView):
 
     model = User
     template_name = 'blog/profile.html'
-    ordering = 'id'
+    ordering = '-pub_date'
     paginate_by = settings.POSTS_PER_PAGE
 
-    @staticmethod
     def get_profile(self):
         return get_object_or_404(User, username=self.kwargs['username'])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = self.get_profile(self)
+        context['profile'] = self.get_profile()
         return context
 
     def get_queryset(self):
-        posts = self.get_profile(self).posts
-        if self.request.user.username != self.kwargs['username']:
-            posts = filter_published_posts(posts)
-        return annotate_comment_count(posts).order_by('-pub_date')
+        author = self.get_profile()
+        posts = annotate(author.posts)
+        if self.request.user != author:
+            posts = filter_pub(posts)
+        return posts
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
