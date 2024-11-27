@@ -6,46 +6,32 @@ from . import settings
 User = get_user_model()
 
 
-class CreatedAtModel(models.Model):
-    """Добавляет время создания контента."""
+class PublishedCreatedModel(models.Model):
+    """Добавляет флаг публикации и время создания контента."""
 
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Добавлено',
     )
-
-    class Meta:
-        abstract = True
-        ordering = ('created_at',)
-
-
-class PublishedCreatedModel(CreatedAtModel):
-    """Добавляет флаг публикации и время создания контента."""
-
     is_published = models.BooleanField(
         verbose_name='Опубликовано',
         default=True,
         help_text='Снимите галочку, чтобы скрыть публикацию.',
     )
 
-    class Meta(CreatedAtModel.Meta):
+    class Meta:
         abstract = True
-
-
-class TitleModel(PublishedCreatedModel):
-    title = models.CharField(
-        max_length=settings.TITLE_MAX_LENGTH,
-        verbose_name='Заголовок',
-    )
-
-    class Meta(PublishedCreatedModel.Meta):
-        abstract = True
+        ordering = ('created_at',)
 
     def __str__(self):
         return self.title[:settings.TITLE_PREVIEW_LENGTH]
 
 
-class Post(TitleModel):
+class Post(PublishedCreatedModel):
+    title = models.CharField(
+        max_length=settings.TITLE_MAX_LENGTH,
+        verbose_name='Заголовок',
+    )
     text = models.TextField('Текст')
     pub_date = models.DateTimeField(
         'Дата и время публикации',
@@ -83,19 +69,29 @@ class Post(TitleModel):
         ordering = ('-pub_date',)
         default_related_name = 'posts'
 
+    def __str__(self):
+        return super().__str__()
 
-class Category(TitleModel):
+
+class Category(PublishedCreatedModel):
+    title = models.CharField(
+        max_length=settings.TITLE_MAX_LENGTH,
+        verbose_name='Заголовок',
+    )
     description = models.TextField('Описание')
     slug = models.SlugField(
         'Идентификатор',
         unique=True,
         help_text='Идентификатор страницы для URL; разрешены символы '
-        'латиницы, цифры, дефис и подчёркивание.',
+                  'латиницы, цифры, дефис и подчёркивание.',
     )
 
-    class Meta(TitleModel.Meta):
+    class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return super().__str__()
 
 
 class Location(PublishedCreatedModel):
@@ -112,19 +108,24 @@ class Location(PublishedCreatedModel):
         return self.name[:settings.LOCATION_PREVIEW_LENGTH]
 
 
-class Comment(CreatedAtModel):
-    text = models.TextField('Текст комментария')
+class Comment(models.Model):
+    text = models.TextField('Текст')
     post = models.ForeignKey(Post,
                              on_delete=models.CASCADE,
                              verbose_name='публикация')
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
                                verbose_name='Автор комментария')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+    )
 
-    class Meta(CreatedAtModel.Meta):
+    class Meta:
         default_related_name = 'comments'
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+        ordering = ('created_at',)
 
     def __str__(self):
         return f'Комментарий пользователя {self.author}'

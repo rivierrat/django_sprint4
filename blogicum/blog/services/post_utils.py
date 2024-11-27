@@ -3,9 +3,9 @@ from django.db.models import Count
 from django.utils.timezone import now
 
 
-def filter_published_posts(requested_posts):
+def filter_published_posts(posts):
     """Отбор только опубликованных постов."""
-    return requested_posts.filter(
+    return posts.filter(
         is_published=True,
         pub_date__lte=now(),
         category__is_published=True,)

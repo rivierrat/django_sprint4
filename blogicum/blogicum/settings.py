@@ -2,6 +2,10 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Здесь не используется подстановка; строка генерируется фреймворком с помощью
+# "".join(secrets.choice(allowed_chars) for i in range(length)),
+# где allowed_chars == 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
+# и length == 50:
 SECRET_KEY = 'django-insecure-xxf282q_3xb688t6t93ksl5!cej9yoaca_d!0a+8%sgf=jjhz#'
 
 DEBUG = True

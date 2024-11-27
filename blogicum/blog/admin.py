@@ -19,15 +19,15 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ('image_tag',)
 
     @admin.display(description='Превью изображения')
-    def image_tag(self, obj):
-        if obj.image:
-            return mark_safe(f'<img src={obj.image.url} '
+    def image_tag(self, post):
+        if post.image:
+            return mark_safe(f'<img src={post.image.url} '
                              f'{settings.ADMIN_IMAGE_PREVIEW_SIZE}>')
 
     @admin.display(description='Текст')
     # Для поля 'text' создаём превью заданной длины:
-    def trim_text(self, obj):
-        return u'%s...' % (obj.text[:settings.ADMIN_POST_PREVIEV_LENGTH],)
+    def trim_text(self, post):
+        return f'{post.text[:settings.ADMIN_POST_PREVIEV_LENGTH]}...'
 
 
 @admin.register(Category)
@@ -37,8 +37,8 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display_links = ('posts_count',)
 
     @admin.display(description='Постов в категории')
-    def posts_count(self, obj):
-        return obj.posts.count()
+    def posts_count(self, category):
+        return category.posts.count()
 
 
 @admin.register(Location)
@@ -48,8 +48,8 @@ class LocationAdmin(admin.ModelAdmin):
     list_display_links = ('posts_count', )
 
     @admin.display(description='Постов в локации')
-    def posts_count(self, obj):
-        return obj.posts.count()
+    def posts_count(self, category):
+        return category.posts.count()
 
 
 @admin.register(Comment)
@@ -59,5 +59,5 @@ class CommentAdmin(admin.ModelAdmin):
 
     @admin.display(description='Комментарий')
     # Для поля 'text' создаём превью заданной длины:
-    def trim_text(self, obj):
-        return u'%s...' % (obj.text[:settings.ADMIN_COMMENT_PREVIEV_LENGTH],)
+    def trim_text(self, comment):
+        return f'{comment.text[:settings.ADMIN_COMMENT_PREVIEV_LENGTH]}...'
