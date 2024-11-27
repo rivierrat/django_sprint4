@@ -98,11 +98,9 @@ class PostUpdateView(PostMixin, UpdateView):
     """Редактирование поста. Только для автора."""
 
     def get_success_url(self):
-        return reverse(
-            'blog:post_detail', args=[self.kwargs['post_id']])
+        return reverse('blog:post_detail',
+                       args=[self.kwargs[self.pk_url_kwarg]])
 
-# self.kwargs[self.pk_url_kwarg]
-# kwargs={'pk': self.get_object().id}
 
 class PostDeleteView(PostMixin, DeleteView):
     """Удаление поста. Только для автора."""
