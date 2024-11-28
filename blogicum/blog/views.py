@@ -37,7 +37,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
     pk_url_kwarg = 'post_id'
     template_name = 'blog/detail.html'
 
-    def get_object(self, post=None):
+    def get_object(self, post_query=None):
         post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
         if post.author == self.request.user:
             return post
@@ -99,7 +99,7 @@ class PostUpdateView(PostMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('blog:post_detail',
-                       args=[self.kwargs[self.pk_url_kwarg]])
+                       args=(self.kwargs[self.pk_url_kwarg],))
 
 
 class PostDeleteView(PostMixin, DeleteView):
@@ -108,7 +108,11 @@ class PostDeleteView(PostMixin, DeleteView):
 
 # Работа с профилем пользователя:
 class ProfileView(ListView):
-    """Отображение профиля пользователя."""
+    """Отображение профиля пользователя.
+
+    Владелец видит в своём профиле все посты. Другиие пользователи видят
+    только опубликованные посты из опубликованных категорий.
+    """
 
     model = User
     template_name = 'blog/profile.html'
@@ -137,7 +141,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'blog/user.html'
     fields = ('username', 'first_name', 'last_name', 'email')
 
-    def get_object(self, user=None):
+    def get_object(self, user_query=None):
         return self.request.user
 
     def get_success_url(self):
@@ -148,6 +152,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 # Работа с комментариями:
 class CommentCreateView(CommentMixin, CreateView):
+    """Создание комментария. Только для зарегистрированных пользователей."""
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -156,8 +161,8 @@ class CommentCreateView(CommentMixin, CreateView):
 
 
 class CommentUpdateView(CommentMixin, OnlyAuthorMixin, UpdateView):
-    pass
+    """Изменение комментария. Только для автора."""
 
 
 class CommentDeleteView(CommentMixin, OnlyAuthorMixin, DeleteView):
-    pass
+    """Удаление комментария. Только для автора."""

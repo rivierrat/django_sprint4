@@ -2,10 +2,9 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Здесь нет подстановки; вхождение '%s' здесь -- не заполнитель, а случайное
-# соседство символов. Строка генерируется кодом
-# "".join(secrets.choice(allowed_chars) for i in range(length)),
-# где allowed_chars == 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)':
+# Нет подстановки; строка генерируется кодом
+# "".join(secrets.choice(allowed_chars) for i in range(length)), где
+# allowed_chars == 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)':
 SECRET_KEY = 'django-insecure-xxf282q_3xb688t6t93ksl5!cej9yoaca_d!0a+8%sgf=jjhz#'
 
 DEBUG = True
@@ -14,7 +13,6 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
 ]
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,6 +44,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'blogicum.urls'
 
 TEMPLATES_DIR = BASE_DIR / 'templates'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

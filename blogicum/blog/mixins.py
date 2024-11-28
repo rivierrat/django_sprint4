@@ -29,7 +29,7 @@ class PostMixin(OnlyAuthorMixin, LoginRequiredMixin):
         return context
 
     def get_success_url(self):
-        return reverse('blog:profile', args=[self.request.user.username])
+        return reverse('blog:profile', args=(self.request.user.username,))
 
 
 class CommentMixin(LoginRequiredMixin):
@@ -40,4 +40,4 @@ class CommentMixin(LoginRequiredMixin):
 
     def get_success_url(self):
         return reverse('blog:post_detail',
-                       args=[self.kwargs['post_id']])
+                       args=(self.kwargs['post_id'],))
