@@ -20,9 +20,7 @@ class IndexView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'posts'
     paginate_by = settings.POSTS_PER_PAGE
-    queryset = filter_published_posts(
-        annotate_comment_count(Post.objects.all())
-    )
+    queryset = filter_published_posts(annotate_comment_count())
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -38,11 +36,11 @@ class PostDetailView(LoginRequiredMixin, DetailView):
     template_name = 'blog/detail.html'
 
     def get_object(self, post_query=None):
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        post = get_object_or_404(Post, pk=self.kwargs[self.pk_url_kwarg])
         if post.author == self.request.user:
             return post
-        return get_object_or_404(filter_published_posts(Post.objects.all()),
-                                 pk=self.kwargs.get('post_id'))
+        return get_object_or_404(filter_published_posts(),
+                                 pk=self.kwargs[self.pk_url_kwarg])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -71,9 +69,8 @@ class CategoryView(ListView):
         return context
 
     def get_queryset(self):
-        category = self.get_category()
         return filter_published_posts(
-            annotate_comment_count(category.posts)
+            annotate_comment_count(self.get_category().posts)
         )
 
 
@@ -146,7 +143,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            'blog:profile', kwargs={'username': self.request.user.username}
+            'blog:profile', args=(self.request.user.username,)
         )
 
 

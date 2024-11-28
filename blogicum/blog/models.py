@@ -23,6 +23,38 @@ class PublishedCreatedModel(models.Model):
         abstract = True
         ordering = ('created_at',)
 
+
+class Location(PublishedCreatedModel):
+    name = models.CharField(
+        max_length=settings.LOCATION_MAX_LENGTH,
+        verbose_name='Название места'
+    )
+
+    class Meta(PublishedCreatedModel.Meta):
+        verbose_name = 'местоположение'
+        verbose_name_plural = 'Местоположения'
+
+    def __str__(self):
+        return self.name[:settings.LOCATION_PREVIEW_LENGTH]
+
+
+class Category(PublishedCreatedModel):
+    title = models.CharField(
+        max_length=settings.TITLE_MAX_LENGTH,
+        verbose_name='Заголовок',
+    )
+    description = models.TextField('Описание')
+    slug = models.SlugField(
+        'Идентификатор',
+        unique=True,
+        help_text='Идентификатор страницы для URL; разрешены символы '
+                  'латиницы, цифры, дефис и подчёркивание.',
+    )
+
+    class Meta:
+        verbose_name = 'категория'
+        verbose_name_plural = 'Категории'
+
     def __str__(self):
         return self.title[:settings.TITLE_PREVIEW_LENGTH]
 
@@ -45,14 +77,14 @@ class Post(PublishedCreatedModel):
 
     )
     location = models.ForeignKey(
-        'Location',
+        Location,
         verbose_name='Местоположение',
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
     )
     category = models.ForeignKey(
-        'Category',
+        Category,
         verbose_name='Категория',
         null=True,
         on_delete=models.SET_NULL,
@@ -70,42 +102,7 @@ class Post(PublishedCreatedModel):
         default_related_name = 'posts'
 
     def __str__(self):
-        return super().__str__()
-
-
-class Category(PublishedCreatedModel):
-    title = models.CharField(
-        max_length=settings.TITLE_MAX_LENGTH,
-        verbose_name='Заголовок',
-    )
-    description = models.TextField('Описание')
-    slug = models.SlugField(
-        'Идентификатор',
-        unique=True,
-        help_text='Идентификатор страницы для URL; разрешены символы '
-                  'латиницы, цифры, дефис и подчёркивание.',
-    )
-
-    class Meta:
-        verbose_name = 'категория'
-        verbose_name_plural = 'Категории'
-
-    def __str__(self):
-        return super().__str__()
-
-
-class Location(PublishedCreatedModel):
-    name = models.CharField(
-        max_length=settings.LOCATION_MAX_LENGTH,
-        verbose_name='Название места'
-    )
-
-    class Meta(PublishedCreatedModel.Meta):
-        verbose_name = 'местоположение'
-        verbose_name_plural = 'Местоположения'
-
-    def __str__(self):
-        return self.name[:settings.LOCATION_PREVIEW_LENGTH]
+        return self.title[:settings.TITLE_PREVIEW_LENGTH]
 
 
 class Comment(models.Model):

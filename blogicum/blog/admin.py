@@ -19,10 +19,11 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ('image_tag',)
 
     @admin.display(description='Превью изображения')
+    @mark_safe
     def image_tag(self, post):
         if post.image:
-            return mark_safe(f'<img src={post.image.url} '
-                             f'{settings.ADMIN_IMAGE_PREVIEW_SIZE}>')
+            return (f'<img src={post.image.url} '
+                    f'{settings.ADMIN_IMAGE_PREVIEW_SIZE}>')
 
     @admin.display(description='Текст')
     # Для поля 'text' создаём превью заданной длины:
