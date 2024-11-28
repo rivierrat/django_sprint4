@@ -22,7 +22,7 @@ class IndexView(ListView):
     paginate_by = settings.POSTS_PER_PAGE
     queryset = filter_published_posts(
         annotate_comment_count(Post.objects.all())
-        )
+    )
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -74,7 +74,7 @@ class CategoryView(ListView):
         category = self.get_category()
         return filter_published_posts(
             annotate_comment_count(category.posts)
-            )
+        )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
